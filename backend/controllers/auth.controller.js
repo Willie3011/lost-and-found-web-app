@@ -66,6 +66,14 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
     const {email, password} = req.body;
 
+    // check if all fields are provided
+    if(!email || !password) {
+        return res.status(400).send({
+            success: false,
+            message: "All fields are required"
+        })
+    }
+
     //check if user exists
     try {
         const user = await User.findOne({email});
@@ -90,7 +98,7 @@ export const loginUser = async (req, res) => {
         return res.status(200).send({
             sucess: true,
             token,
-            user: {id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role}
+            user: {id: user._id, name: user.name, email: user.email, role: user.role}
         });
     } catch (error) {
         console.log("Error in logging in user", error);
