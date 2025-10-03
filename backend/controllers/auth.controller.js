@@ -1,17 +1,33 @@
 import bcrypt from "bcrypt";
 import { User } from "../models/user.model.js";
+import { generateToken } from "../lib/decodeToken.js";
 
-const hashPassword = (password) => {
+const hashPassword = async (password) => {
     const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS) || 10
-    return bcrypt.hashSync(password, SALT_ROUNDS || 10);
+    return await bcrypt.hash(password, SALT_ROUNDS || 10);
 }
 
-const comparePassword = (password, hashedPassword) => {
-    return bcrypt.compareSync(password, hashedPassword);
+const comparePassword = async (password, hashedPassword) => {
+    return await bcrypt.compare(password, hashedPassword);
 }
 
 export const registerUser = async (req, res) => {
     const {name, email, password} = req.body;
+
+    // check if all fields are provided
+    if(!name || !email || !password) {
+        return res.status(400).send({
+            success: false,
+            message: "All fields are required"
+        })
+    }
+
+    if(password.length < 6) {
+        return res.status(400).send({
+            success: false,
+            message: "Password must be at least 6 characters long"
+        })
+    }
 
     // check if user already exists
     const existingUser = await User.findOne({email});
@@ -30,8 +46,13 @@ export const registerUser = async (req, res) => {
     });
 
     try {
-        newUser.save();
-        return res.status(201).send(newUser)
+        await newUser.save();
+
+        return res.status(201).send({
+            user: {id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role},
+            message: "User registered successfully",
+            success: true
+        })
     } catch (error) {
         console.log("Error in registering user", error);
         return res.status(500).send({
@@ -63,11 +84,14 @@ export const loginUser = async (req, res) => {
                 success: false
             })
         }
-        
-        const userRes = user.toObject();
-        delete userRes.password;
-        
-        return res.status(200).send(userRes);
+
+        // generate token
+        const token = generateToken(user._id);
+        return res.status(200).send({
+            sucess: true,
+            token,
+            user: {id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role}
+        });
     } catch (error) {
         console.log("Error in logging in user", error);
         return res.status(500).send({
