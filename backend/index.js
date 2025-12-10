@@ -4,6 +4,7 @@ import { connectDB } from './dbconfig/dbconfig.js';
 import 'dotenv/config'
 import authRoutes from './routes/auth.route.js';
 import itemRoutes from './routes/item.route.js';
+import adminRoutes from "./routes/admin.auth.route.js"
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,6 +16,7 @@ app.use(express.json());
 // routes
 app.use('/api', authRoutes);
 app.use('/api', itemRoutes);
+app.use('/api', adminRoutes);
 
 
 app.listen(PORT, async (req, res) => {
