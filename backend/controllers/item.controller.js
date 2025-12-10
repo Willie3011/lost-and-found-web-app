@@ -2,18 +2,12 @@ import { Item } from "../models/item.model.js";
 import { User } from "../models/user.model.js";
 
 export const createItem = async (req, res) => {
-  const { title, description, category, date, location, imageUrl, userId } =
+  const { title, description, category, date, location, imageUrl} =
     req.body;
 
   try {
-    // Check if user exists
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(401).json({
-        message: "Authentication failed: User not found",
-        success: false,
-      });
-    }
+
+    const userId = req.user._id;
 
     //Create new Item
     const newItem = new Item({
@@ -38,7 +32,7 @@ export const createItem = async (req, res) => {
     return res.status(500).json({
       message: "Error creating Item",
       success: false,
-      error,
+      error: error.message,
     });
   }
 };
@@ -88,6 +82,7 @@ export const getItemById = async (req, res) => {
   }
 };
 
+// Update route /item/update
 export const updateItem = async (req, res) => {
   const { id } = req.params;
   const updateData = req.body;
@@ -120,11 +115,14 @@ export const updateItem = async (req, res) => {
   }
 };
 
+// Delete route /item/delete
 export const deleteItem = async (req, res) => {
   const { id } = req.params;
+  const user = req.user;
+  const userId = user._id;
 
   try{
-      // check if item exists
+      // fetch item
     const item = await Item.findById(id);
     if(!item) {
         return res.status(404).json({
@@ -132,12 +130,27 @@ export const deleteItem = async (req, res) => {
             success:false
         })
     }
-    await Item.findByIdAndDelete(id);
+
+    //Authorization: check if user is author of item
+    const isOwner = item.userId.equals(userId);
+    const isAdmin = req.user.role === "admin";
+
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        message: "You are not authorized to delete this item",
+        success: false
+      })
+    }
+
+    await item.deleteOne();
 
     return res.status(200).json({
-        message: "Item deleted successfully",
-        success: true,
+      message: "Item deleted successfuly", 
+      success: true
     })
+
+
   } catch (error) {
     console.log("Error deleting item", error);
     return res.status(500).json({

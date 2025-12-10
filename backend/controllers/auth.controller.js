@@ -39,7 +39,7 @@ export const registerUser = async (req, res) => {
     }
 
     // hash the password
-    const hashedPassword = hashPassword(password);
+    const hashedPassword = await hashPassword(password);
 
     const newUser = new User({
         name, email, password: hashedPassword
