@@ -118,8 +118,7 @@ export const updateItem = async (req, res) => {
 // Delete route /item/delete
 export const deleteItem = async (req, res) => {
   const { id } = req.params;
-  const user = req.user;
-  const userId = user._id;
+  const userId = req.user._id;
 
   try{
       // fetch item
