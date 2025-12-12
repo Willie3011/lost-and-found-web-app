@@ -46,3 +46,49 @@ export const getUsers = async (req, res) => {
 
 
 }
+
+export const deleteUser = async (req, res) => {
+    const { role } = req.user;
+    const isAdmin = role === "admin";
+
+    if (!isAdmin) {
+        return res.status(403).json({
+            success: false,
+            message: "Forbidden"
+        })
+    }
+
+    const { id } = req.params;
+
+    try {
+        // check if user is current admin: to prevent admin from deleting themselves
+        if (id === req.user._id.toString()) {
+            return res.status(400).json({
+                success: false,
+                message: "You cannot delete your own admin account."
+            })
+        }
+
+        // delete user
+        const deletedUser = await User.findByIdAndDelete(id);
+
+        if (!deleteUser) {
+            return res.status(404).json({
+                success: false,
+                message: "user not found."
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "user deleted successfully."
+        })
+    } catch (error) {
+        console.log("Error deleting user",error);
+        return res.status(500).json({
+            success: false,
+            message: "error deleting user",
+            error: error.message
+        })
+    }
+}
